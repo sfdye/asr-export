@@ -43,6 +43,11 @@
   h1{font-size:48px;line-height:1.12;letter-spacing:-1.4px;font-weight:780;margin-bottom:20px}
   .accent{background:linear-gradient(120deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
   .sub{font-size:18.5px;color:var(--mut);max-width:640px;margin:0 auto 32px;line-height:1.6}
+  .install{display:inline-flex;align-items:center;gap:14px;max-width:min(100%,560px);margin:0 auto;background:var(--term);border:1px solid var(--term-line);
+           border-radius:12px;padding:13px 16px;font-size:14px;box-shadow:var(--shadow);margin-top:32px}
+  .install code{color:var(--term-grn);white-space:nowrap;overflow:auto}
+  .install .cp{background:#ffffff14;border:0;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;flex:none}
+  .install .cp:hover{background:#ffffff26}
   .btnrow{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:12px 20px;font-size:14.5px;font-weight:650;cursor:pointer;box-shadow:var(--shadow)}
   .btn.p{background:linear-gradient(120deg,var(--acc),#0bbf86);border-color:transparent;color:#04241a}
@@ -69,7 +74,6 @@
   .card h3{font-size:16.5px;margin-bottom:7px;letter-spacing:-.2px}
   .card p{color:var(--mut);font-size:14px;line-height:1.6}
 
-  .tabs{display:flex;gap:8px;margin-bottom:14px}
   .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut)}
   .tab.on{color:var(--fg);border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
   pre.code{background:var(--term);color:var(--term-fg);border:1px solid var(--term-line);border-radius:14px;padding:20px;
@@ -100,13 +104,14 @@
     header{padding:48px 0 40px}
     h1{font-size:31px;letter-spacing:-1px}
     .sub{font-size:16px;margin-bottom:26px}
+    .install{width:100%;gap:10px;padding:12px 13px}
+    .install code{font-size:11.5px}
     section{padding:44px 0}
     h2{font-size:23px}
     .lead{margin-bottom:22px}
     .card{padding:20px}
     .term{margin-top:32px}
     .term pre,pre.code{font-size:12px;padding:16px}
-    .tabs{flex-wrap:wrap}
     td,th{padding:11px 12px}
     .step{grid-template-columns:34px 1fr;gap:12px}
   }
@@ -134,11 +139,17 @@
     <a class="btn" href="https://github.com/sfdye/asr-export">View source</a>
   </div>
 
+  <div class="install"><code id="installCmd" class="mono">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash  # after install, run: asr-export help</code>
+    <button class="cp" onclick="cp(document.getElementById('installCmd').textContent,this)">copy</button></div>
+
   <div class="term mono" aria-hidden="true">
     <div class="term-bar"><i class="tb1"></i><i class="tb2"></i><i class="tb3"></i><span class="t">asr-export — Terminal</span></div>
 <pre><span class="d">$</span> asr-export <span class="p">login</span>
 Email: you@example.com
 Password: ********
+<span class="p">🔐 New-device verification:</span>
+   An OTP has been sent to your email — please check.
+   Email OTP: <span class="g">123456</span>
 <span class="g">✅ Logged in — session saved (~1 year)</span>
 
 <span class="d">$</span> asr-export <span class="p">download</span>
@@ -165,32 +176,12 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
 <section id="install"><div class="wrap">
   <div class="eyebrow">Install</div>
   <h2>One-time setup</h2>
-  <p class="lead">You'll paste a few short commands into your computer's <b>Terminal</b> — that's the window where you type commands. Don't worry: it's all copy-paste. Pick your system:</p>
-  <div class="tabs">
-    <button class="tab on" onclick="osTab('mac',this)">macOS</button>
-    <button class="tab" onclick="osTab('lin',this)">Linux</button>
-    <button class="tab" onclick="osTab('win',this)">Windows</button>
-  </div>
-  <pre class="code" id="os-mac"><span class="c"># Press ⌘+Space, type "Terminal", press Enter. Then paste these lines one at a time:</span>
-mkdir -p ~/asr &amp;&amp; cd ~/asr
-curl -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py
-curl -fsSLO https://github.com/sfdye/asr-export/raw/main/install.sh
-bash install.sh
-
-<span class="c"># When it prints "✅ Done!", open a NEW Terminal window (⌘+N) and continue to the guide below.</span></pre>
-  <pre class="code hide" id="os-lin"><span class="c"># Open your terminal app, then paste these lines one at a time:</span>
-mkdir -p ~/asr &amp;&amp; cd ~/asr
-curl -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py
-curl -fsSLO https://github.com/sfdye/asr-export/raw/main/install.sh
-bash install.sh
-
-<span class="c"># When it prints "✅ Done!", open a NEW terminal window and continue to the guide below.</span></pre>
-  <pre class="code hide" id="os-win"><span class="c"># Press ⊞ Win, type "PowerShell", press Enter. Then paste these lines one at a time:</span>
-mkdir $env:USERPROFILE\asr; cd $env:USERPROFILE\asr
-curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py
-
-<span class="c"># Windows skips the installer — run the tool directly (see the guide below).
-# On Windows, every command starts with:  python asr-export.py</span></pre>
+  <p class="lead">You'll paste one command into your computer's <b>Terminal</b> — that's the window where you type commands. Don't worry: it's copy-paste. Mac and Linux: press the copy button, paste into the Terminal, press Enter.</p>
+  <pre class="code"><span class="c"># One-line install (macOS / Linux) — open Terminal, paste, press Enter</span>
+curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash  <span class="c"># after install, run: asr-export help</span></pre>
+  <div class="note">🖥️ <b>Windows?</b> Press ⊞ Win, type <span class="mono">PowerShell</span>, press Enter, then paste:<br>
+  <span class="mono">mkdir $env:USERPROFILE\asr; cd $env:USERPROFILE\asr; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</span><br>
+  Windows skips the installer — every command then starts with <span class="mono">python asr-export.py</span> instead of <span class="mono">asr-export</span>.</div>
 </div></section>
 
 <section id="guide"><div class="wrap">
@@ -270,8 +261,7 @@ asr-export download --dry-run  <span class="c"># preview only, downloads nothing
 </div></footer>
 
 <script>
-function osTab(id,btn){ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on")); btn.classList.add("on");
-  ["mac","lin","win"].forEach(x=>document.getElementById("os-"+x).classList.toggle("hide", x!==id)); }
+function cp(txt,btn){ navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="✓"; setTimeout(()=>btn.textContent=o,1200); }
 </script>
 </body>
 </html>

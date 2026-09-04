@@ -21,10 +21,10 @@ Everything runs **locally** on your machine:
 Requires Python 3. Then either:
 
 ```bash
-bash install.sh          # installs the `asr-export` command (recommended)
+curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash
 ```
 
-or just run it in place: `python3 asr-export.py <command>`.
+or, from a checkout: `bash install.sh`, or just run it in place: `python3 asr-export.py <command>`.
 
 ## Usage
 
