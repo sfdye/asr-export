@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+# ruff's default set, pinned so a user-global config can't leak in
+select = ["E4", "E7", "E9", "F"]
