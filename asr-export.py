@@ -13,9 +13,8 @@ Everything runs locally: your credentials are only used to log in to Habitap
 over HTTPS and are never sent anywhere else. The password is never written to
 disk — only the session cookie, stored in ~/.asr with mode 0600.
 
-The login flow is inspired by the community asrcli project (https://asrlife.vip),
-which reverse-engineered the Habitap resident API. Session files are
-interchangeable between the two tools.
+The login flow is inspired by the community project at https://asrlife.vip,
+which reverse-engineered the Habitap resident API.
 
 Python 3 standard library only.
 """
@@ -126,7 +125,7 @@ def _merge_set_cookie(headers):
             else: ck[k] = v
     _save_cookies(ck)
 
-# ---------------- login (flow adapted from asrcli, https://asrlife.vip; session shared) ----------------
+# ---------------- login (flow adapted from https://asrlife.vip) ----------------
 
 def cmd_login(args):
     HOME.mkdir(parents=True, exist_ok=True)
@@ -465,7 +464,7 @@ def _opt(args, flag, default=None):
     return default
 
 HELP_EN = """ASR · asr-export — bulk document downloader for Avenue South Residence (Habitap)
-The login session lives in ~/.asr and is shared with asrcli (log in with either).
+The login session lives in ~/.asr and lasts about a year.
 
 Usage:
   asr-export login [-u <email>] [-o <otp>] [--force]
@@ -493,7 +492,7 @@ paced (~0.4s apart).
 """
 
 HELP_ZH = """ASR · asr-export — Avenue South Residence (Habitap) 文档批量下载
-登录会话存于 ~/.asr，与 asrcli 互通（用哪个登录都行）。
+登录会话存于 ~/.asr（约 1 年有效）。
 
 用法:
   asr-export login [-u <邮箱>] [-o <otp>] [--force]

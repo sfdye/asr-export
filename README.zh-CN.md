@@ -47,7 +47,7 @@ asr-export download --dry-run    # 只看会下载什么
 
 ## 致谢
 
-登录流程与 API 模式参考了社区项目 **asrcli**（[asrlife.vip](https://asrlife.vip)）— 该项目逆向了 Habitap 住户端 API 用于场地预订。两个工具的会话（`~/.asr`）互通。
+登录流程与 API 模式参考了社区项目 [asrlife.vip](https://asrlife.vip) — 该项目逆向了 Habitap 住户端 API 用于场地预订。
 
 ## 说明
 

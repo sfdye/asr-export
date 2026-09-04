@@ -47,7 +47,7 @@ English by default; the interface switches to Chinese automatically on a Chinese
 
 ## Acknowledgements
 
-The login flow and API patterns are inspired by the community **asrcli** project ([asrlife.vip](https://asrlife.vip)), which reverse-engineered the Habitap resident API for facility booking. Sessions are interchangeable between the two tools (`~/.asr`).
+The login flow and API patterns are inspired by the community project at [asrlife.vip](https://asrlife.vip), which reverse-engineered the Habitap resident API for facility booking.
 
 ## Notes
 
