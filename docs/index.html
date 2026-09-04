@@ -139,7 +139,7 @@
     <a class="btn" href="https://github.com/sfdye/asr-export">View source</a>
   </div>
 
-  <div class="install"><code id="installCmd" class="mono">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash  # after install, run: asr-export help</code>
+  <div class="install"><code id="installCmd" class="mono">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</code>
     <button class="cp" onclick="cp(document.getElementById('installCmd').textContent,this)">copy</button></div>
 
   <div class="term mono" aria-hidden="true">
@@ -150,7 +150,7 @@ Password: ********
 <span class="p">🔐 New-device verification:</span>
    An OTP has been sent to your email — please check.
    Email OTP: <span class="g">123456</span>
-<span class="g">✅ Logged in — session saved (~1 year)</span>
+<span class="g">✅ Logged in</span>
 
 <span class="d">$</span> asr-export <span class="p">download</span>
 select categories (e.g. 1,3 or all): all
@@ -168,7 +168,7 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
     <div class="card"><span class="ic">📂</span><h3>Sorted by category</h3><p>Files land in named folders (Circulars, Manuals, Warranties…), each named after its title in the app.</p></div>
     <div class="card"><span class="ic">⏯</span><h3>Stop &amp; resume anytime</h3><p>Interrupt with Ctrl+C any time. Re-running picks up where you left off — already-downloaded files are skipped.</p></div>
     <div class="card"><span class="ic">👀</span><h3>Preview before downloading</h3><p>Categories are previewed when you list them, and <span class="mono">--dry-run</span> shows exactly what would be saved.</p></div>
-    <div class="card"><span class="ic">🔑</span><h3>Log in once</h3><p>First login on a new device needs a one-time code from your email. After that, the session lasts about a year.</p></div>
+    <div class="card"><span class="ic">🔑</span><h3>Log in once</h3><p>First login on a new device needs a one-time code from your email. After that, you stay logged in.</p></div>
     <div class="card"><span class="ic">🧩</span><h3>Zero dependencies</h3><p>Pure Python 3 — the programming tool your computer usually already has. Nothing else to install.</p></div>
   </div>
 </div></section>
@@ -178,7 +178,7 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
   <h2>One-time setup</h2>
   <p class="lead">You'll paste one command into your computer's <b>Terminal</b> — that's the window where you type commands. Don't worry: it's copy-paste. Mac and Linux: press the copy button, paste into the Terminal, press Enter.</p>
   <pre class="code"><span class="c"># One-line install (macOS / Linux) — open Terminal, paste, press Enter</span>
-curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash  <span class="c"># after install, run: asr-export help</span></pre>
+curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</pre>
   <div class="note">🖥️ <b>Windows?</b> Press ⊞ Win, type <span class="mono">PowerShell</span>, press Enter, then paste:<br>
   <span class="mono">mkdir $env:USERPROFILE\asr; cd $env:USERPROFILE\asr; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</span><br>
   Windows skips the installer — every command then starts with <span class="mono">python asr-export.py</span> instead of <span class="mono">asr-export</span>.</div>
@@ -201,7 +201,7 @@ curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash  <span class="c"
 
   <div class="step"><div class="n">3</div><div>
     <h3>Log in with your Habitap account</h3>
-    <p>Type your email and Habitap password when asked. The password won't show as you type — that's normal, just type it and press Enter. The first time on a new device, it emails you a one-time code (OTP): check your inbox, type the code in, press Enter. You stay logged in for about a year.</p>
+    <p>Type your email and Habitap password when asked. The password won't show as you type — that's normal, just type it and press Enter. The first time on a new device, it emails you a one-time code (OTP): check your inbox, type the code in, press Enter. That's it — you're logged in.</p>
     <pre class="code"><span class="b">asr-export login</span>          <span class="c"># Windows: python asr-export.py login</span></pre>
   </div></div>
 
@@ -232,7 +232,7 @@ asr-export download --dry-run  <span class="c"># preview only, downloads nothing
     <tr><th>Question</th><th>Answer</th></tr>
     <tr><td>Where do my files go?</td><td>Straight from Habitap's servers to a folder on your computer. Nowhere else.</td></tr>
     <tr><td>Is my password stored?</td><td>No. It's used only to log in to Habitap over HTTPS and is never written to disk — it exists in memory only during login.</td></tr>
-    <tr><td>What is stored on my computer?</td><td>A login session (cookie) in a private folder <span class="mono">~/.asr</span>, valid ~1 year, plus small lists of already-downloaded files so re-runs can skip them.</td></tr>
+    <tr><td>What is stored on my computer?</td><td>A login session (cookie) in a private folder <span class="mono">~/.asr</span>, plus small lists of already-downloaded files so re-runs can skip them.</td></tr>
     <tr><td>Does anyone else get my data?</td><td>No. The tool contacts only Habitap's own API and file CDN. This website is a static page — it collects nothing.</td></tr>
   </table>
   <div class="note">⚠️ Use your own account only, and download only what it can access, for personal archival. Downloads are deliberately paced so we don't burden Habitap's servers — please don't try to speed them up.</div>
