@@ -34,11 +34,16 @@ LANG = _detect_lang()
 def t(en, zh): return zh if LANG == "zh" else en
 
 # Habitap's CA chain lacks the keyUsage extension; Python 3.13+/OpenSSL 3.5+
-# enables VERIFY_X509_STRICT by default and rejects it. The chain is still
-# fully verified — we only disable the strict linting.
-_ctx = ssl.create_default_context()
-_ctx.verify_flags &= ~ssl.VERIFY_X509_STRICT
-ssl._create_default_https_context = lambda: _ctx
+# enables VERIFY_X509_STRICT by default and rejects it. Older Pythons don't
+# have the flag at all — guard with hasattr so this works everywhere. The
+# chain is still fully verified — we only disable the strict linting.
+try:
+    _ctx = ssl.create_default_context()
+    if hasattr(ssl, "VERIFY_X509_STRICT"):
+        _ctx.verify_flags &= ~ssl.VERIFY_X509_STRICT
+    ssl._create_default_https_context = lambda: _ctx
+except Exception:
+    pass
 
 CFG = {
     "baseUrl": "https://avenuesouth.habitap.app/avenuesouth",
@@ -289,16 +294,16 @@ def cmd_list(args):
     for c, docs in cat:
         if flt is not None and not _cat_match(c, flt): continue
         total += len(docs)
-        print(f"\n  {B(c['name'])}  {D(f'({len(docs)} docs, id {c["id"]})')}")
+        print(f"\n  {B(c['name'])}  " + D(f"({len(docs)} docs, id {c['id']})"))
         shown = docs if show_all or len(docs) <= LIST_PREVIEW else docs[:LIST_PREVIEW]
         for e in shown:
             tag = Cy("↗") if e.get("externalUrl") and not e.get("filePath") else D("·")
-            print(f"    {tag} {e['caption'].strip()}  {D(f'[{e["id"]}]')}")
+            print(f"    {tag} {e['caption'].strip()}  " + D(f"[{e['id']}]"))
         if len(shown) < len(docs):
             more = len(docs) - len(shown)
             hidden += more
-            print(f"    {D('…')} {Y(t(f'{more} more not shown', f'其余 {more} 个未显示'))}  "
-                  f"{D(f'(asr-export list --cat \"{c["name"].strip()}\" --all)')}")
+            hint = f"(asr-export list --cat \"{c['name'].strip()}\" --all)"
+            print(f"    {D('…')} {Y(t(f'{more} more not shown', f'其余 {more} 个未显示'))}  " + D(hint))
     tail = D(t("  (deduped; a doc may show under one category only)",
                "  （已去重；同一文档只显示在一个类别下）"))
     if hidden: tail += Y(t(f"  · {hidden} hidden in preview — add --all to show everything",
@@ -312,11 +317,10 @@ def _choose_categories(catalog):
         print(f"  {Cy(str(i).rjust(2))})  {c['name']}  {D(f'({len(docs)} docs)')}")
     total = sum(len(d) for _, d in catalog)
     print(D(t(f"  {total} documents total", f"  合计 {total} 个文档")))
+    hint = t("(e.g. 1,3-5; Enter=all; a=all; q=quit)", "(如 1,3-5；回车=全部；a=全部；q=退出)")
     while True:
         try:
-            raw = input(f"{B(t('select', '选择'))} "
-                        f"{D(t('(e.g. 1,3-5; Enter=all; a=all; q=quit)',
-                               '(如 1,3-5；回车=全部；a=全部；q=退出)'))}: ").strip()
+            raw = input(f"{B(t('select', '选择'))} {D(hint)}: ").strip()
         except EOFError:
             die(t("non-interactive session — use:  asr-export download --cat <name> --yes",
                   "非交互环境 — 请使用:  asr-export download --cat <名称> --yes"))
@@ -416,7 +420,7 @@ def cmd_download(args):
                     manifest[str(e["id"])] = _mrec(e, c, p.relative_to(out), kind="link")
                     save_manifest()
                     continue
-                print(f"  {R(t('✗ no url', '✗ 无下载链接'))}  {e['caption']}  {D(f'[{e["id"]}]')}")
+                print(f"  {R(t('✗ no url', '✗ 无下载链接'))}  {e['caption']}  " + D(f"[{e['id']}]"))
                 fail += 1
                 continue
             p = unique_path(cdir, doc_filename(e), e["id"])
