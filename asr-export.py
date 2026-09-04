@@ -18,7 +18,17 @@ which reverse-engineered the Habitap resident API.
 
 Python 3 standard library only.
 """
-import sys, os, json, time, ssl, hashlib, datetime, getpass, urllib.request, urllib.error
+
+import sys
+import os
+import json
+import time
+import ssl
+import hashlib
+import datetime
+import getpass
+import urllib.request
+import urllib.error
 from pathlib import Path
 
 # Habitap's CA chain lacks the keyUsage extension; Python 3.13+/OpenSSL 3.5+
@@ -35,43 +45,79 @@ except Exception:
 
 CFG = {
     "baseUrl": "https://avenuesouth.habitap.app/avenuesouth",
-    "condoId": 32, "userAgent": "okhttp/4.12.0",
-    "condoCode": "AVESOU", "userTypeTag": "RESIDENT", "devicePlatform": "ANDROID",
-    "appId": "com.habitap.residential.avesouth", "apiVersion": "V2", "timeZone": "Asia/Singapore",
+    "condoId": 32,
+    "userAgent": "okhttp/4.12.0",
+    "condoCode": "AVESOU",
+    "userTypeTag": "RESIDENT",
+    "devicePlatform": "ANDROID",
+    "appId": "com.habitap.residential.avesouth",
+    "apiVersion": "V2",
+    "timeZone": "Asia/Singapore",
 }
 HOME = Path(os.environ.get("ASR_HOME", str(Path.home() / ".asr")))
-SJSON = HOME / "session.json"; CKS = HOME / "cookies.json"
+SJSON = HOME / "session.json"
+CKS = HOME / "cookies.json"
 MANIFESTS_DIR = HOME / "manifests"
+
 
 def _manifest_path(out):
     """One manifest.json per output dir, stored under ~/.asr/manifests/<key>/."""
     key = hashlib.sha256(str(out).encode()).hexdigest()[:16]
     return MANIFESTS_DIR / key / "manifest.json"
 
-_TTY = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
-def _c(code, s): return f"\033[{code}m{s}\033[0m" if _TTY else str(s)
-def B(s): return _c("1", s)
-def D(s): return _c("2", s)
-def G(s): return _c("32", s)
-def Y(s): return _c("33", s)
-def R(s): return _c("31", s)
-def Cy(s): return _c("36", s)
 
-def die(msg): print(R("✗ ") + str(msg), file=sys.stderr); sys.exit(1)
+_TTY = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+
+
+def _c(code, s):
+    return f"\033[{code}m{s}\033[0m" if _TTY else str(s)
+
+
+def B(s):
+    return _c("1", s)
+
+
+def D(s):
+    return _c("2", s)
+
+
+def G(s):
+    return _c("32", s)
+
+
+def Y(s):
+    return _c("33", s)
+
+
+def R(s):
+    return _c("31", s)
+
+
+def Cy(s):
+    return _c("36", s)
+
+
+def die(msg):
+    print(R("✗ ") + str(msg), file=sys.stderr)
+    sys.exit(1)
+
 
 def load_session():
     if not SJSON.exists() or not CKS.exists():
         die("No session found. First run:  asr-export login")
     return json.loads(SJSON.read_text())
 
+
 def cookie_header():
     ck = json.loads(CKS.read_text())
     return "; ".join(f"{k}={v}" for k, v in ck.items())
 
+
 def http_json(method, url, body=None, tries=3):
     data = json.dumps(body).encode() if body is not None else None
     headers = {"User-Agent": CFG["userAgent"], "Cookie": cookie_header()}
-    if data is not None: headers["Content-Type"] = "application/json"
+    if data is not None:
+        headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     for attempt in range(1, tries + 1):
         try:
@@ -79,62 +125,88 @@ def http_json(method, url, body=None, tries=3):
                 return r.status, json.loads(r.read().decode("utf-8", "replace"))
         except urllib.error.HTTPError as e:
             raw = e.read().decode("utf-8", "replace")
-            try: return e.code, json.loads(raw)
-            except Exception: return e.code, {"error": raw[:200]}
+            try:
+                return e.code, json.loads(raw)
+            except Exception:
+                return e.code, {"error": raw[:200]}
         except (urllib.error.URLError, TimeoutError, OSError) as e:
-            if attempt == tries: return 0, {"error": str(getattr(e, "reason", e))}
+            if attempt == tries:
+                return 0, {"error": str(getattr(e, "reason", e))}
             time.sleep(2 * attempt)
     return 0, {"error": "unreachable"}
+
 
 def need_session():
     s = load_session()
     st, _ = http_json("GET", CFG["baseUrl"] + "/api/authentications/1")
-    if st != 200: die("Session expired — re-run:  asr-export login")
+    if st != 200:
+        die("Session expired — re-run:  asr-export login")
     return s
+
 
 def cfg(s, *path):
     d = s
-    for p in path: d = (d or {}).get(p)
+    for p in path:
+        d = (d or {}).get(p)
     return d
 
-def api(path): return CFG["baseUrl"] + path
+
+def api(path):
+    return CFG["baseUrl"] + path
+
 
 def _save_cookies(ck):
     HOME.mkdir(parents=True, exist_ok=True)
     CKS.write_text(json.dumps(ck))
-    try: os.chmod(CKS, 0o600)
-    except Exception: pass
+    try:
+        os.chmod(CKS, 0o600)
+    except Exception:
+        pass
+
 
 def _merge_set_cookie(headers):
     """Merge Set-Cookie headers from a login response into ~/.asr/cookies.json."""
     ck = json.loads(CKS.read_text()) if CKS.exists() else {}
-    for sc in (headers.get_all("Set-Cookie") or []):
+    for sc in headers.get_all("Set-Cookie") or []:
         kv = sc.split(";", 1)[0].strip()
         if "=" in kv:
             k, v = kv.split("=", 1)
-            if v == "deleteMe": ck.pop(k, None)
-            else: ck[k] = v
+            if v == "deleteMe":
+                ck.pop(k, None)
+            else:
+                ck[k] = v
     _save_cookies(ck)
 
+
 # ---------------- login (flow adapted from https://asrlife.vip) ----------------
+
 
 def cmd_login(args):
     HOME.mkdir(parents=True, exist_ok=True)
     # Already logged in with a working session? Skip unless --force / -u given.
-    if not ("--force" in args or "-f" in args) and not isinstance(_opt(args, "-u"), str) \
-            and SJSON.exists() and CKS.exists():
+    if (
+        not ("--force" in args or "-f" in args)
+        and not isinstance(_opt(args, "-u"), str)
+        and SJSON.exists()
+        and CKS.exists()
+    ):
         st, u = http_json("GET", api("/api/authentications/1"))
         if st == 200 and isinstance(u, dict):
             unit = u.get("unit") or {}
             full = (u.get("authentication") or {}).get("fullName")
-            print(f"  {G('✓ already logged in')}  {full}  {unit.get('unitNo')}"
-                  + D(f"  ({unit.get('condoName')})"))
+            print(
+                f"  {G('✓ already logged in')}  {full}  {unit.get('unitNo')}"
+                + D(f"  ({unit.get('condoName')})")
+            )
             print("  " + D("re-login:  asr-export login --force"))
             return
-    print(B("ASR login")
-          + D("  new devices need a one-time email OTP; session lasts ~1 year; password never stored"))
+    print(
+        B("ASR login")
+        + D("  new devices need a one-time email OTP; session lasts ~1 year; password never stored")
+    )
     user = _opt(args, "-u")
-    if not isinstance(user, str): user = input("  Email: ").strip()
+    if not isinstance(user, str):
+        user = input("  Email: ").strip()
     pw = getpass.getpass("  Password: ")
     s = load_session() if SJSON.exists() else None
     # Server rejects client-made installationIds (409); empty string enters the
@@ -142,11 +214,21 @@ def cmd_login(args):
     inst = cfg(s, "device", "installationId") or ""
 
     def body(otp, iid):
-        b = {"username": user, "password": pw, "devicePlatform": CFG["devicePlatform"],
-             "deviceToken": "", "userTypeTag": CFG["userTypeTag"], "condoCode": CFG["condoCode"],
-             "rememberMe": "true", "installationId": iid, "appId": CFG["appId"],
-             "modelName": "Google", "modelNumber": "Pixel 7"}
-        if otp: b["otp"] = otp
+        b = {
+            "username": user,
+            "password": pw,
+            "devicePlatform": CFG["devicePlatform"],
+            "deviceToken": "",
+            "userTypeTag": CFG["userTypeTag"],
+            "condoCode": CFG["condoCode"],
+            "rememberMe": "true",
+            "installationId": iid,
+            "appId": CFG["appId"],
+            "modelName": "Google",
+            "modelNumber": "Pixel 7",
+        }
+        if otp:
+            b["otp"] = otp
         return b
 
     backup = json.loads(CKS.read_text()) if CKS.exists() else {}
@@ -154,9 +236,14 @@ def cmd_login(args):
 
     def post(b):
         data = json.dumps(b).encode()
-        h = {"User-Agent": CFG["userAgent"], "Content-Type": "application/json",
-             "apiVersion": CFG["apiVersion"]}
-        req = urllib.request.Request(api("/api/authentications"), data=data, headers=h, method="POST")
+        h = {
+            "User-Agent": CFG["userAgent"],
+            "Content-Type": "application/json",
+            "apiVersion": CFG["apiVersion"],
+        }
+        req = urllib.request.Request(
+            api("/api/authentications"), data=data, headers=h, method="POST"
+        )
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 _merge_set_cookie(r.headers)
@@ -164,8 +251,10 @@ def cmd_login(args):
         except urllib.error.HTTPError as e:
             _merge_set_cookie(e.headers)
             raw = e.read().decode("utf-8", "replace")
-            try: return e.code, json.loads(raw)
-            except Exception: return e.code, {"error": raw[:200]}
+            try:
+                return e.code, json.loads(raw)
+            except Exception:
+                return e.code, {"error": raw[:200]}
 
     otp_opt = _opt(args, "-o")
     otp0 = otp_opt if isinstance(otp_opt, str) else None
@@ -174,59 +263,92 @@ def cmd_login(args):
         inst = ""
         st, j = post(body(otp0, inst))
     if st == 452:
-        msg = (j.get("message") if isinstance(j, dict) else "") \
-            or "An OTP has been sent to your email — please check."
+        msg = (
+            j.get("message") if isinstance(j, dict) else ""
+        ) or "An OTP has been sent to your email — please check."
         print("🔐 New-device verification:")
         print("   " + msg)
         otp = input("   Email OTP: ").strip()
         st, j = post(body(otp, inst))
     if st != 200:
         _save_cookies(backup)  # keep any previously-working session intact
-        hint = (j.get("auth failed") or j.get("message") or str(j))[:160] if isinstance(j, dict) else str(j)[:160]
-        die(f"Login failed (HTTP {st}): {hint}\n"
-            "  Check: email/password are correct · the account is at Avenue South Residence · the account is active.")
+        hint = (
+            (j.get("auth failed") or j.get("message") or str(j))[:160]
+            if isinstance(j, dict)
+            else str(j)[:160]
+        )
+        die(
+            f"Login failed (HTTP {st}): {hint}\n"
+            "  Check: email/password are correct · the account is at Avenue South Residence · the account is active."
+        )
 
     st2, u = http_json("GET", api("/api/authentications/1"))
     unit = (u.get("unit") or {}) if isinstance(u, dict) else {}
     sess = {
         "config": dict(CFG, condoId=unit.get("condoId") or CFG["condoId"]),
-        "device": {"installationId": inst, "deviceToken": "", "modelName": "Google", "modelNumber": "Pixel 7"},
+        "device": {
+            "installationId": inst,
+            "deviceToken": "",
+            "modelName": "Google",
+            "modelNumber": "Pixel 7",
+        },
         "account": {
             "username": (u.get("residentAccount") or {}).get("userName"),
             "fullName": (u.get("authentication") or {}).get("fullName"),
-            "unitId": unit.get("id"), "blockCode": unit.get("blockCode"),
-            "unitNo": unit.get("unitNo"), "residentAccountId": (u.get("residentAccount") or {}).get("id"),
+            "unitId": unit.get("id"),
+            "blockCode": unit.get("blockCode"),
+            "unitNo": unit.get("unitNo"),
+            "residentAccountId": (u.get("residentAccount") or {}).get("id"),
             "condoName": unit.get("condoName"),
         },
     }
     SJSON.write_text(json.dumps(sess, ensure_ascii=False, indent=2))
-    try: os.chmod(SJSON, 0o600)
-    except Exception: pass
-    print(f"  {G('✓ login ok')}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
-          + D(f"  ({sess['account']['condoName']})"))
+    try:
+        os.chmod(SJSON, 0o600)
+    except Exception:
+        pass
+    print(
+        f"  {G('✓ login ok')}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
+        + D(f"  ({sess['account']['condoName']})")
+    )
     print("  " + D("session saved (~1 year, password never stored to disk)"))
     print("  " + D("next:  asr-export download"))
 
+
 # ---------------- ASR data ----------------
+
 
 def fetch_catalog(s):
     """Returns [(category, [doc, ...]), ...] for this account's block, deduped by doc id."""
     cid, block = cfg(s, "config", "condoId"), cfg(s, "account", "blockCode")
-    st, j = http_json("GET", api(f"/api/condos/{cid}/document-categories?viewFormat=PUB&condoBlockCode={block}"))
-    if st != 200: die(f"Failed to list categories (HTTP {st}): {str(j)[:160]}")
-    cats = sorted((j.get("entities") or []), key=lambda c: (c.get("sequenceOrder") or 0, c.get("id")))
+    st, j = http_json(
+        "GET", api(f"/api/condos/{cid}/document-categories?viewFormat=PUB&condoBlockCode={block}")
+    )
+    if st != 200:
+        die(f"Failed to list categories (HTTP {st}): {str(j)[:160]}")
+    cats = sorted(
+        (j.get("entities") or []), key=lambda c: (c.get("sequenceOrder") or 0, c.get("id"))
+    )
     seen, result = {}, []
     for c in cats:
-        st, j = http_json("GET", api(f"/api/condos/{cid}/documents?viewFormat=PUB"
-                                     f"&categoryId={c['id']}&condoBlockCode={block}"))
-        if st != 200: die(f"Failed to list documents for '{c['name']}' (HTTP {st}): {str(j)[:160]}")
+        st, j = http_json(
+            "GET",
+            api(
+                f"/api/condos/{cid}/documents?viewFormat=PUB"
+                f"&categoryId={c['id']}&condoBlockCode={block}"
+            ),
+        )
+        if st != 200:
+            die(f"Failed to list documents for '{c['name']}' (HTTP {st}): {str(j)[:160]}")
         docs = []
-        for e in (j.get("entities") or []):
+        for e in j.get("entities") or []:
             if e["id"] not in seen:
                 seen[e["id"]] = e
                 docs.append(e)
-        if docs: result.append((c, docs))
+        if docs:
+            result.append((c, docs))
     return result
+
 
 def sanitize(name, maxlen=120):
     name = str(name or "").strip().replace("\t", " ")
@@ -234,34 +356,46 @@ def sanitize(name, maxlen=120):
     name = " ".join(name.split())
     return (name[:maxlen] or "untitled").rstrip(". ")
 
+
 MIME_EXT = {
     "application/pdf": ".pdf",
-    "image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif",
-    "text/plain": ".txt", "application/msword": ".doc",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "text/plain": ".txt",
+    "application/msword": ".doc",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
     "application/vnd.ms-excel": ".xls",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
 }
 
+
 def doc_filename(doc):
     url = doc.get("filePath") or ""
     for ext in (".pdf", ".jpg", ".jpeg", ".png", ".gif", ".txt", ".doc", ".docx", ".xls", ".xlsx"):
-        if url.lower().split("?")[0].endswith(ext): return sanitize(doc["caption"]) + ext
+        if url.lower().split("?")[0].endswith(ext):
+            return sanitize(doc["caption"]) + ext
     return sanitize(doc["caption"]) + MIME_EXT.get(doc.get("fileType") or "", ".bin")
+
 
 def unique_path(directory, stem, doc_id):
     p = directory / stem
-    if not p.exists(): return p
+    if not p.exists():
+        return p
     return directory / f"{p.stem} [{doc_id}]{p.suffix}"
+
 
 # ---------------- commands ----------------
 
 LIST_PREVIEW = 10  # per category; more than this shows a preview (--all for full)
 
+
 def _cat_match(c, flt):
     """--cat accepts a category id (exact digits) or a name substring."""
-    if str(flt).strip().isdigit(): return str(c["id"]) == str(flt).strip()
+    if str(flt).strip().isdigit():
+        return str(c["id"]) == str(flt).strip()
     return str(flt).lower() in c["name"].lower()
+
 
 def cmd_list(args):
     s = need_session()
@@ -269,10 +403,13 @@ def cmd_list(args):
     show_all = "--all" in args
     cat = fetch_catalog(s)
     total = hidden = 0
-    head = B("ASR documents") + D(f"  unit {cfg(s,'account','unitNo')} · block {cfg(s,'account','blockCode')}")
+    head = B("ASR documents") + D(
+        f"  unit {cfg(s, 'account', 'unitNo')} · block {cfg(s, 'account', 'blockCode')}"
+    )
     print(head)
     for c, docs in cat:
-        if flt is not None and not _cat_match(c, flt): continue
+        if flt is not None and not _cat_match(c, flt):
+            continue
         total += len(docs)
         print(f"\n  {B(c['name'])}  " + D(f"({len(docs)} docs, id {c['id']})"))
         shown = docs if show_all or len(docs) <= LIST_PREVIEW else docs[:LIST_PREVIEW]
@@ -282,11 +419,13 @@ def cmd_list(args):
         if len(shown) < len(docs):
             more = len(docs) - len(shown)
             hidden += more
-            hint = f"(asr-export list --cat \"{c['name'].strip()}\" --all)"
+            hint = f'(asr-export list --cat "{c["name"].strip()}" --all)'
             print(f"    {D('…')} {Y(f'{more} more not shown')}  " + D(hint))
     tail = D("  (deduped; a doc may show under one category only)")
-    if hidden: tail += Y(f"  · {hidden} hidden in preview — add --all to show everything")
+    if hidden:
+        tail += Y(f"  · {hidden} hidden in preview — add --all to show everything")
     print(f"\n  {G('total:')} {total} documents{tail}")
+
 
 def _choose_categories(catalog):
     """Interactive category picker. Returns the chosen [(cat, docs)] or [] to abort."""
@@ -302,24 +441,32 @@ def _choose_categories(catalog):
         except EOFError:
             die("non-interactive session — use:  asr-export download --cat <name> --yes")
         low = raw.lower()
-        if low in ("q", "quit", "exit"): return []
-        if raw == "" or low in ("a", "all"): return catalog
+        if low in ("q", "quit", "exit"):
+            return []
+        if raw == "" or low in ("a", "all"):
+            return catalog
         picks = set()
         try:
             for tok in raw.replace(" ", "").split(","):
-                if not tok: continue
+                if not tok:
+                    continue
                 if "-" in tok:
-                    a, b = tok.split("-", 1); a, b = int(a), int(b)
-                    if not (1 <= a <= b <= len(catalog)): raise ValueError
+                    a, b = tok.split("-", 1)
+                    a, b = int(a), int(b)
+                    if not (1 <= a <= b <= len(catalog)):
+                        raise ValueError
                     picks.update(range(a, b + 1))
                 else:
                     n = int(tok)
-                    if not (1 <= n <= len(catalog)): raise ValueError
+                    if not (1 <= n <= len(catalog)):
+                        raise ValueError
                     picks.add(n)
-            if picks: return [catalog[i - 1] for i in sorted(picks)]
+            if picks:
+                return [catalog[i - 1] for i in sorted(picks)]
         except ValueError:
             pass
         print(Y("  invalid selection, try again"))
+
 
 def _confirm(prompt):
     try:
@@ -327,19 +474,23 @@ def _confirm(prompt):
     except EOFError:
         return False
 
+
 def cmd_download(args):
     s = need_session()
     o = _opt(args, "-o")
-    default_out = Path(os.environ.get("ASR_EXPORT_DIR")
-                       or str(Path(__file__).resolve().parent / "asr-export"))
+    default_out = Path(
+        os.environ.get("ASR_EXPORT_DIR") or str(Path(__file__).resolve().parent / "asr-export")
+    )
     out = Path(o if isinstance(o, str) else default_out).expanduser().absolute()
     flt = _opt(args, "--cat")
     dry = "--dry-run" in args
     force = "--force" in args
     auto = "-y" in args or "--yes" in args
     catalog = fetch_catalog(s)
-    if flt: catalog = [(c, d) for c, d in catalog if _cat_match(c, flt)]
-    if not catalog: die("No documents matched.")
+    if flt:
+        catalog = [(c, d) for c, d in catalog if _cat_match(c, flt)]
+    if not catalog:
+        die("No documents matched.")
 
     if auto:
         chosen = catalog
@@ -354,7 +505,9 @@ def cmd_download(args):
         return
 
     if not (auto or dry):
-        if not _confirm(f"{B('confirm')} {Y(f'download {total} documents to {out} ?')} {D('[y/N]')}: "):
+        if not _confirm(
+            f"{B('confirm')} {Y(f'download {total} documents to {out} ?')} {D('[y/N]')}: "
+        ):
             print("  " + D("cancelled"))
             return
     print(B("Download") + D(f"  {total} docs -> {out}" + ("  (dry-run)" if dry else "")))
@@ -362,27 +515,33 @@ def cmd_download(args):
     manifest_path = _manifest_path(out)
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
     manifest.setdefault("_outputDir", str(out))
+
     def save_manifest():
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
+
     ok, skip, fail, ext, n = 0, 0, 0, 0, 0
     t0 = time.time()
     for c, docs in chosen:
         cdir = out / sanitize(c["name"], 60)
-        if not dry: cdir.mkdir(parents=True, exist_ok=True)
+        if not dry:
+            cdir.mkdir(parents=True, exist_ok=True)
         for e in docs:
             n += 1
             rel = f"{cdir.name}/{doc_filename(e)}"
             m = manifest.get(str(e["id"]))
             done_file = (cdir / doc_filename(e)).exists() or (
-                m and (out / m.get("file", "missing")).exists())
+                m and (out / m.get("file", "missing")).exists()
+            )
             if not force and m and done_file:
                 skip += 1
                 if m.get("categories") and c["name"] not in m["categories"]:
                     m["categories"].append(c["name"])
                 continue
             if dry:
-                print(f"  {Cy('would download')}  {rel}  {D(e.get('filePath') or e.get('externalUrl') or '')}")
+                print(
+                    f"  {Cy('would download')}  {rel}  {D(e.get('filePath') or e.get('externalUrl') or '')}"
+                )
                 ok += 1
                 continue
             url = e.get("filePath")
@@ -409,15 +568,26 @@ def cmd_download(args):
                 fail += 1
             time.sleep(0.4)
     dt = time.time() - t0
-    print(f"\n  {G('✓')} done  downloaded {ok}  skipped {skip}  failed {fail}"
-          + (f"  links {ext}" if ext else "") + D(f"  in {dt:.0f}s"))
-    if dry: print(D("  re-run without --dry-run to actually download"))
+    print(
+        f"\n  {G('✓')} done  downloaded {ok}  skipped {skip}  failed {fail}"
+        + (f"  links {ext}" if ext else "")
+        + D(f"  in {dt:.0f}s")
+    )
+    if dry:
+        print(D("  re-run without --dry-run to actually download"))
+
 
 def _mrec(e, c, relpath, kind="file"):
-    return {"caption": e["caption"].strip(), "description": (e.get("description") or "").strip(),
-            "categories": [c["name"]], "url": e.get("filePath") or e.get("externalUrl"),
-            "file": str(relpath), "kind": kind,
-            "downloadedAt": datetime.datetime.now().isoformat(timespec="seconds")}
+    return {
+        "caption": e["caption"].strip(),
+        "description": (e.get("description") or "").strip(),
+        "categories": [c["name"]],
+        "url": e.get("filePath") or e.get("externalUrl"),
+        "file": str(relpath),
+        "kind": kind,
+        "downloadedAt": datetime.datetime.now().isoformat(timespec="seconds"),
+    }
+
 
 def _download(url, path):
     for attempt in (1, 2, 3):
@@ -429,16 +599,20 @@ def _download(url, path):
         except Exception as e:
             if attempt == 3:
                 print(f"  {R('✗ failed')}  {path.name}  {D(str(e)[:120])}")
-                if path.exists(): path.unlink()
+                if path.exists():
+                    path.unlink()
                 return False
             time.sleep(1.5 * attempt)
+
 
 def _opt(args, flag, default=None):
     if flag in args:
         i = args.index(flag)
-        if i + 1 < len(args) and not args[i + 1].startswith("-"): return args[i + 1]
+        if i + 1 < len(args) and not args[i + 1].startswith("-"):
+            return args[i + 1]
         return default if default is not None else True
     return default
+
 
 HELP = """ASR · asr-export — bulk document downloader for Avenue South Residence (Habitap)
 The login session lives in ~/.asr and lasts about a year.
@@ -466,19 +640,26 @@ download — saved after each file, so Ctrl+C + re-run resumes. Downloads are
 paced (~0.4s apart).
 """
 
+
 def main():
     args = sys.argv[1:]
     cmd = args[0] if args else "help"
     rest = args[1:]
     try:
-        if cmd in ("-h", "--help", "help"): print(HELP)
-        elif cmd == "login": cmd_login(rest)
-        elif cmd == "list": cmd_list(rest)
-        elif cmd == "download": cmd_download(rest)
-        else: die(f"unknown command '{cmd}' — asr-export help")
+        if cmd in ("-h", "--help", "help"):
+            print(HELP)
+        elif cmd == "login":
+            cmd_login(rest)
+        elif cmd == "list":
+            cmd_list(rest)
+        elif cmd == "download":
+            cmd_download(rest)
+        else:
+            die(f"unknown command '{cmd}' — asr-export help")
     except KeyboardInterrupt:
         print("\n" + D("interrupted — re-run to resume"))
         sys.exit(130)
+
 
 if __name__ == "__main__":
     main()
