@@ -122,7 +122,12 @@ def http_json(method, url, body=None, tries=3):
     for attempt in range(1, tries + 1):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
-                return r.status, json.loads(r.read().decode("utf-8", "replace"))
+                raw = r.read().decode("utf-8", "replace")
+            try:
+                return r.status, json.loads(raw)
+            except ValueError:
+                # 2xx with a non-JSON body (WAF/CDN interstitial, proxy error page)
+                return r.status, {"error": raw[:200]}
         except urllib.error.HTTPError as e:
             raw = e.read().decode("utf-8", "replace")
             try:
@@ -139,6 +144,8 @@ def http_json(method, url, body=None, tries=3):
 def need_session():
     s = load_session()
     st, _ = http_json("GET", CFG["baseUrl"] + "/api/authentications/1")
+    if st == 0:
+        die("Network error — check your connection and retry.")
     if st != 200:
         die("Session expired — re-run:  asr-export login")
     return s
@@ -245,7 +252,11 @@ def cmd_login(args):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 _merge_set_cookie(r.headers)
-                return r.status, json.loads(r.read().decode("utf-8", "replace"))
+                raw = r.read().decode("utf-8", "replace")
+            try:
+                return r.status, json.loads(raw)
+            except ValueError:
+                return r.status, {"error": raw[:200]}
         except urllib.error.HTTPError as e:
             _merge_set_cookie(e.headers)
             raw = e.read().decode("utf-8", "replace")
@@ -253,6 +264,8 @@ def cmd_login(args):
                 return e.code, json.loads(raw)
             except Exception:
                 return e.code, {"error": raw[:200]}
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            return 0, {"error": str(getattr(e, "reason", e))}
 
     otp_opt = _opt(args, "-o")
     otp0 = otp_opt if isinstance(otp_opt, str) else None
@@ -275,6 +288,8 @@ def cmd_login(args):
             if isinstance(j, dict)
             else str(j)[:160]
         )
+        if st == 0:
+            die(f"Network error during login: {hint}")
         die(
             f"Login failed (HTTP {st}): {hint}\n"
             "  Check: email/password are correct · the account is at Avenue South "
@@ -316,7 +331,7 @@ def cmd_login(args):
 
 
 def fetch_catalog(s):
-    """Returns [(category, [doc, ...]), ...] for this account's block, deduped by doc id."""
+    """Returns [(category, [doc, ...]), ...] for this account's block (docs NOT deduped)."""
     cid, block = cfg(s, "config", "condoId"), cfg(s, "account", "blockCode")
     st, j = http_json(
         "GET", api(f"/api/condos/{cid}/document-categories?viewFormat=PUB&condoBlockCode={block}")
@@ -326,7 +341,7 @@ def fetch_catalog(s):
     cats = sorted(
         (j.get("entities") or []), key=lambda c: (c.get("sequenceOrder") or 0, c.get("id"))
     )
-    seen, result = {}, []
+    result = []
     for c in cats:
         st, j = http_json(
             "GET",
@@ -337,13 +352,22 @@ def fetch_catalog(s):
         )
         if st != 200:
             die(f"Failed to list documents for '{c['name']}' (HTTP {st}): {str(j)[:160]}")
-        docs = []
-        for e in j.get("entities") or []:
+        if j.get("entities"):
+            result.append((c, list(j["entities"])))
+    return result
+
+
+def dedup_catalog(catalog):
+    """Assigns each doc id to the first category that contains it (drops later duplicates)."""
+    seen, result = set(), []
+    for c, docs in catalog:
+        kept = []
+        for e in docs:
             if e["id"] not in seen:
-                seen[e["id"]] = e
-                docs.append(e)
-        if docs:
-            result.append((c, docs))
+                seen.add(e["id"])
+                kept.append(e)
+        if kept:
+            result.append((c, kept))
     return result
 
 
@@ -397,16 +421,19 @@ def _cat_match(c, flt):
 def cmd_list(args):
     s = need_session()
     flt = _opt(args, "--cat")
+    if flt is not None and not isinstance(flt, str):
+        die("--cat needs a value, e.g. --cat Circulars")
     show_all = "--all" in args
     cat = fetch_catalog(s)
+    if flt is not None:
+        cat = [(c, d) for c, d in cat if _cat_match(c, flt)]
+    cat = dedup_catalog(cat)
     total = hidden = 0
     head = B("ASR documents") + D(
         f"  unit {cfg(s, 'account', 'unitNo')} · block {cfg(s, 'account', 'blockCode')}"
     )
     print(head)
     for c, docs in cat:
-        if flt is not None and not _cat_match(c, flt):
-            continue
         total += len(docs)
         print(f"\n  {B(c['name'])}  " + D(f"({len(docs)} docs, id {c['id']})"))
         shown = docs if show_all or len(docs) <= LIST_PREVIEW else docs[:LIST_PREVIEW]
@@ -480,12 +507,15 @@ def cmd_download(args):
     )
     out = Path(o if isinstance(o, str) else default_out).expanduser().absolute()
     flt = _opt(args, "--cat")
+    if flt is not None and not isinstance(flt, str):
+        die("--cat needs a value, e.g. --cat Circulars")
     dry = "--dry-run" in args
     force = "--force" in args
     auto = "-y" in args or "--yes" in args
     catalog = fetch_catalog(s)
-    if flt:
+    if flt is not None:
         catalog = [(c, d) for c, d in catalog if _cat_match(c, flt)]
+    catalog = dedup_catalog(catalog)
     if not catalog:
         die("No documents matched.")
 
@@ -524,37 +554,49 @@ def cmd_download(args):
             cdir.mkdir(parents=True, exist_ok=True)
         for e in docs:
             n += 1
-            rel = f"{cdir.name}/{doc_filename(e)}"
             m = manifest.get(str(e["id"]))
-            done_file = (cdir / doc_filename(e)).exists() or (
-                m and (out / m.get("file", "missing")).exists()
-            )
-            if not force and m and done_file:
+            mfile = (out / m["file"]) if (m and m.get("file")) else None
+            if not force and m and mfile and mfile.exists():
                 skip += 1
                 if m.get("categories") and c["name"] not in m["categories"]:
                     m["categories"].append(c["name"])
-                continue
-            if dry:
-                url_hint = e.get("filePath") or e.get("externalUrl") or ""
-                print(f"  {Cy('would download')}  {rel}  {D(url_hint)}")
-                ok += 1
-                continue
-            url = e.get("filePath")
-            if not url:
-                url = e.get("externalUrl")
-                if url and url.startswith("http"):
-                    p = unique_path(cdir, sanitize(e["caption"]) + ".url", e["id"])
-                    p.write_text(url + "\n")
-                    ext += 1
-                    manifest[str(e["id"])] = _mrec(e, c, p.relative_to(out), kind="link")
                     save_manifest()
-                    continue
+                continue
+
+            url = e.get("filePath")
+            kind = "file"
+            if not url and (e.get("externalUrl") or "").startswith("http"):
+                url = e["externalUrl"]
+                kind = "link"
+            if not url:
                 print(f"  {R('✗ no url')}  {e['caption']}  " + D(f"[{e['id']}]"))
                 fail += 1
                 continue
-            p = unique_path(cdir, doc_filename(e), e["id"])
-            r = _download(url, p)
-            if r:
+
+            stem = doc_filename(e) if kind == "file" else sanitize(e["caption"]) + ".url"
+            # Reuse the recorded filename when we have one (replaces the old copy
+            # in place, including with --force); --force overwrites the primary
+            # name; otherwise avoid clobbering an unrelated file sharing the name.
+            if mfile is not None:
+                p = mfile
+            elif force:
+                p = cdir / stem
+            else:
+                p = unique_path(cdir, stem, e["id"])
+            rel = f"{cdir.name}/{p.name}"
+
+            if dry:
+                print(f"  {Cy('would download')}  {rel}  {D(url)}")
+                ok += 1
+                continue
+            if kind == "link":
+                p.write_text(url + "\n")
+                ext += 1
+                manifest[str(e["id"])] = _mrec(e, c, p.relative_to(out), kind="link")
+                save_manifest()
+                print(f"  {D(f'[{n}/{total}]')} {G('✓')} {rel}")
+                continue
+            if _download(url, p):
                 ok += 1
                 manifest[str(e["id"])] = _mrec(e, c, p.relative_to(out))
                 save_manifest()
@@ -591,11 +633,15 @@ def _download(url, path):
             with urllib.request.urlopen(req, timeout=60) as r, open(path, "wb") as f:
                 f.write(r.read())
             return True
+        except KeyboardInterrupt:
+            if path.exists():
+                path.unlink()
+            raise  # abort the whole run, not just this file
         except Exception as e:
             if attempt == 3:
-                print(f"  {R('✗ failed')}  {path.name}  {D(str(e)[:120])}")
                 if path.exists():
                     path.unlink()
+                print(f"  {R('✗ failed')}  {path.name}  {D(str(e)[:120])}")
                 return False
             time.sleep(1.5 * attempt)
 
@@ -613,7 +659,7 @@ HELP = """ASR · asr-export — bulk document downloader for Avenue South Reside
 The login session lives in ~/.asr and lasts about a year.
 
 Usage:
-  asr-export login [-u <email>] [-o <otp>] [--force]
+  asr-export login [-u <email>] [-o <otp>] [--force | -f]
         Log in (skipped if already logged in; new devices need a one-time email OTP)
   asr-export list [--cat <keyword|id>] [--all]
         Show documents grouped by category (large categories are previewed, first 10)
