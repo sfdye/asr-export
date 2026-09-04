@@ -1,6 +1,6 @@
 # asr-export
 
-Bulk document exporter for **Avenue South Residence** (the Habitap app). [中文说明](README.zh-CN.md)
+Bulk document exporter for **Avenue South Residence** (the Habitap app).
 
 ## Background
 
@@ -40,10 +40,6 @@ asr-export download --dry-run    # show what would be downloaded
 - Output: `<dir>/<category>/<caption>.pdf` (default dir: `asr-export/` next to the script; the installed command defaults to `~/Documents/asr-export`; override with `-o`).
 - Resume: re-running skips already-downloaded files (tracked via a per-directory manifest under `~/.asr/manifests/`). `--force` re-downloads.
 - Interrupt any time with Ctrl+C — progress is saved after every file.
-
-## Language
-
-English by default; the interface switches to Chinese automatically on a Chinese locale, or with `ASR_EXPORT_LANG=zh`.
 
 ## Acknowledgements
 

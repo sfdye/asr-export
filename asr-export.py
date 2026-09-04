@@ -21,18 +21,6 @@ Python 3 standard library only.
 import sys, os, json, time, ssl, hashlib, datetime, getpass, urllib.request, urllib.error
 from pathlib import Path
 
-# ---------------- i18n (English by default; zh when ASR_EXPORT_LANG=zh or a zh_* locale) ----------------
-
-def _detect_lang():
-    v = os.environ.get("ASR_EXPORT_LANG")
-    if v: return "zh" if v.strip().lower().startswith("zh") else "en"
-    for k in ("LC_ALL", "LANG"):
-        if (os.environ.get(k) or "").lower().startswith("zh"): return "zh"
-    return "en"
-
-LANG = _detect_lang()
-def t(en, zh): return zh if LANG == "zh" else en
-
 # Habitap's CA chain lacks the keyUsage extension; Python 3.13+/OpenSSL 3.5+
 # enables VERIFY_X509_STRICT by default and rejects it. Older Pythons don't
 # have the flag at all — guard with hasattr so this works everywhere. The
@@ -73,8 +61,7 @@ def die(msg): print(R("✗ ") + str(msg), file=sys.stderr); sys.exit(1)
 
 def load_session():
     if not SJSON.exists() or not CKS.exists():
-        die(t("No session found. First run:  asr-export login",
-              "尚未登录，先运行:  asr-export login"))
+        die("No session found. First run:  asr-export login")
     return json.loads(SJSON.read_text())
 
 def cookie_header():
@@ -102,8 +89,7 @@ def http_json(method, url, body=None, tries=3):
 def need_session():
     s = load_session()
     st, _ = http_json("GET", CFG["baseUrl"] + "/api/authentications/1")
-    if st != 200: die(t("Session expired — re-run:  asr-export login",
-                        "会话失效，请重新登录:  asr-export login"))
+    if st != 200: die("Session expired — re-run:  asr-export login")
     return s
 
 def cfg(s, *path):
@@ -141,17 +127,15 @@ def cmd_login(args):
         if st == 200 and isinstance(u, dict):
             unit = u.get("unit") or {}
             full = (u.get("authentication") or {}).get("fullName")
-            print(f"  {G(t('✓ already logged in', '✓ 已登录'))}  {full}  {unit.get('unitNo')}"
+            print(f"  {G('✓ already logged in')}  {full}  {unit.get('unitNo')}"
                   + D(f"  ({unit.get('condoName')})"))
-            print("  " + D(t("re-login:  asr-export login --force",
-                            "重新登录:  asr-export login --force")))
+            print("  " + D("re-login:  asr-export login --force"))
             return
-    print(B(t("ASR login", "ASR 登录"))
-          + D(t("  new devices need a one-time email OTP; session lasts ~1 year; password never stored",
-                "  首次/新设备需邮箱 OTP（仅一次；之后约 1 年免登录，密码不落盘）")))
+    print(B("ASR login")
+          + D("  new devices need a one-time email OTP; session lasts ~1 year; password never stored"))
     user = _opt(args, "-u")
-    if not isinstance(user, str): user = input(t("  Email: ", "  邮箱: ")).strip()
-    pw = getpass.getpass(t("  Password: ", "  密码: "))
+    if not isinstance(user, str): user = input("  Email: ").strip()
+    pw = getpass.getpass("  Password: ")
     s = load_session() if SJSON.exists() else None
     # Server rejects client-made installationIds (409); empty string enters the
     # 452/OTP new-device flow. Reuse a previously-registered one if we have it.
@@ -191,18 +175,16 @@ def cmd_login(args):
         st, j = post(body(otp0, inst))
     if st == 452:
         msg = (j.get("message") if isinstance(j, dict) else "") \
-            or t("An OTP has been sent to your email — please check.", "已向你的邮箱发送 OTP，请查收。")
-        print(t("🔐 New-device verification:", "🔐 新设备验证:"))
+            or "An OTP has been sent to your email — please check."
+        print("🔐 New-device verification:")
         print("   " + msg)
-        otp = input(t("   Email OTP: ", "   邮箱 OTP: ")).strip()
+        otp = input("   Email OTP: ").strip()
         st, j = post(body(otp, inst))
     if st != 200:
         _save_cookies(backup)  # keep any previously-working session intact
         hint = (j.get("auth failed") or j.get("message") or str(j))[:160] if isinstance(j, dict) else str(j)[:160]
-        die(t(f"Login failed (HTTP {st}): {hint}\n"
-              "  Check: email/password are correct · the account is at Avenue South Residence · the account is active.",
-              f"登录失败 (HTTP {st}): {hint}\n"
-              "  检查: 邮箱/密码是否正确 · 账号是否在 Avenue South Residence · 是否已激活未停用。"))
+        die(f"Login failed (HTTP {st}): {hint}\n"
+            "  Check: email/password are correct · the account is at Avenue South Residence · the account is active.")
 
     st2, u = http_json("GET", api("/api/authentications/1"))
     unit = (u.get("unit") or {}) if isinstance(u, dict) else {}
@@ -220,11 +202,10 @@ def cmd_login(args):
     SJSON.write_text(json.dumps(sess, ensure_ascii=False, indent=2))
     try: os.chmod(SJSON, 0o600)
     except Exception: pass
-    print(f"  {G(t('✓ login ok', '✓ 登录成功'))}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
+    print(f"  {G('✓ login ok')}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
           + D(f"  ({sess['account']['condoName']})"))
-    print("  " + D(t("session saved (~1 year, password never stored to disk)",
-                    "会话已保存（~1 年免登录，密码不落盘）")))
-    print("  " + D(t("next:  asr-export download", "下一步:  asr-export download")))
+    print("  " + D("session saved (~1 year, password never stored to disk)"))
+    print("  " + D("next:  asr-export download"))
 
 # ---------------- ASR data ----------------
 
@@ -288,8 +269,7 @@ def cmd_list(args):
     show_all = "--all" in args
     cat = fetch_catalog(s)
     total = hidden = 0
-    head = B(t("ASR documents", "ASR 文档")) \
-        + D(f"  unit {cfg(s,'account','unitNo')} · block {cfg(s,'account','blockCode')}")
+    head = B("ASR documents") + D(f"  unit {cfg(s,'account','unitNo')} · block {cfg(s,'account','blockCode')}")
     print(head)
     for c, docs in cat:
         if flt is not None and not _cat_match(c, flt): continue
@@ -303,27 +283,24 @@ def cmd_list(args):
             more = len(docs) - len(shown)
             hidden += more
             hint = f"(asr-export list --cat \"{c['name'].strip()}\" --all)"
-            print(f"    {D('…')} {Y(t(f'{more} more not shown', f'其余 {more} 个未显示'))}  " + D(hint))
-    tail = D(t("  (deduped; a doc may show under one category only)",
-               "  （已去重；同一文档只显示在一个类别下）"))
-    if hidden: tail += Y(t(f"  · {hidden} hidden in preview — add --all to show everything",
-                           f"  · 预览中隐藏 {hidden} 条 — 加 --all 显示全部"))
-    print(f"\n  {G(t('total:', '合计:'))} {total} {t('documents', '个文档')}{tail}")
+            print(f"    {D('…')} {Y(f'{more} more not shown')}  " + D(hint))
+    tail = D("  (deduped; a doc may show under one category only)")
+    if hidden: tail += Y(f"  · {hidden} hidden in preview — add --all to show everything")
+    print(f"\n  {G('total:')} {total} documents{tail}")
 
 def _choose_categories(catalog):
     """Interactive category picker. Returns the chosen [(cat, docs)] or [] to abort."""
-    print(B(t("Categories available for download:", "可下载的类别:")))
+    print(B("Categories available for download:"))
     for i, (c, docs) in enumerate(catalog, 1):
         print(f"  {Cy(str(i).rjust(2))})  {c['name']}  {D(f'({len(docs)} docs)')}")
     total = sum(len(d) for _, d in catalog)
-    print(D(t(f"  {total} documents total", f"  合计 {total} 个文档")))
-    hint = t("(e.g. 1,3-5; Enter=all; a=all; q=quit)", "(如 1,3-5；回车=全部；a=全部；q=退出)")
+    print(D(f"  {total} documents total"))
+    hint = "(e.g. 1,3-5; Enter=all; a=all; q=quit)"
     while True:
         try:
-            raw = input(f"{B(t('select', '选择'))} {D(hint)}: ").strip()
+            raw = input(f"{B('select')} {D(hint)}: ").strip()
         except EOFError:
-            die(t("non-interactive session — use:  asr-export download --cat <name> --yes",
-                  "非交互环境 — 请使用:  asr-export download --cat <名称> --yes"))
+            die("non-interactive session — use:  asr-export download --cat <name> --yes")
         low = raw.lower()
         if low in ("q", "quit", "exit"): return []
         if raw == "" or low in ("a", "all"): return catalog
@@ -342,7 +319,7 @@ def _choose_categories(catalog):
             if picks: return [catalog[i - 1] for i in sorted(picks)]
         except ValueError:
             pass
-        print(Y(t("  invalid selection, try again", "  输入无效，请重试")))
+        print(Y("  invalid selection, try again"))
 
 def _confirm(prompt):
     try:
@@ -362,27 +339,25 @@ def cmd_download(args):
     auto = "-y" in args or "--yes" in args
     catalog = fetch_catalog(s)
     if flt: catalog = [(c, d) for c, d in catalog if _cat_match(c, flt)]
-    if not catalog: die(t("No documents matched.", "没有匹配的文档。"))
+    if not catalog: die("No documents matched.")
 
     if auto:
         chosen = catalog
     else:
         chosen = _choose_categories(catalog)
         if not chosen:
-            print("  " + D(t("nothing selected, bye", "未选择任何类别，退出")))
+            print("  " + D("nothing selected, bye"))
             return
     total = sum(len(d) for _, d in chosen)
     if not total:
-        print("  " + D(t("selected categories are empty, bye", "所选类别暂无文档")))
+        print("  " + D("selected categories are empty, bye"))
         return
 
     if not (auto or dry):
-        if not _confirm(f"{B(t('confirm', '确认'))} "
-                        f"{Y(t(f'download {total} documents to {out} ?', f'下载 {total} 个文档到 {out} ?'))} "
-                        f"{D('[y/N]')}: "):
-            print("  " + D(t("cancelled", "已取消")))
+        if not _confirm(f"{B('confirm')} {Y(f'download {total} documents to {out} ?')} {D('[y/N]')}: "):
+            print("  " + D("cancelled"))
             return
-    print(B(t("Download", "下载")) + D(f"  {total} docs -> {out}" + ("  (dry-run)" if dry else "")))
+    print(B("Download") + D(f"  {total} docs -> {out}" + ("  (dry-run)" if dry else "")))
 
     manifest_path = _manifest_path(out)
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
@@ -407,7 +382,7 @@ def cmd_download(args):
                     m["categories"].append(c["name"])
                 continue
             if dry:
-                print(f"  {Cy(t('would download', '将下载'))}  {rel}  {D(e.get('filePath') or e.get('externalUrl') or '')}")
+                print(f"  {Cy('would download')}  {rel}  {D(e.get('filePath') or e.get('externalUrl') or '')}")
                 ok += 1
                 continue
             url = e.get("filePath")
@@ -420,7 +395,7 @@ def cmd_download(args):
                     manifest[str(e["id"])] = _mrec(e, c, p.relative_to(out), kind="link")
                     save_manifest()
                     continue
-                print(f"  {R(t('✗ no url', '✗ 无下载链接'))}  {e['caption']}  " + D(f"[{e['id']}]"))
+                print(f"  {R('✗ no url')}  {e['caption']}  " + D(f"[{e['id']}]"))
                 fail += 1
                 continue
             p = unique_path(cdir, doc_filename(e), e["id"])
@@ -434,11 +409,9 @@ def cmd_download(args):
                 fail += 1
             time.sleep(0.4)
     dt = time.time() - t0
-    print(f"\n  {G('✓')} {t('done', '完成')}  {t('downloaded', '已下载')} {ok}  "
-          f"{t('skipped', '已跳过')} {skip}  {t('failed', '失败')} {fail}"
+    print(f"\n  {G('✓')} done  downloaded {ok}  skipped {skip}  failed {fail}"
           + (f"  links {ext}" if ext else "") + D(f"  in {dt:.0f}s"))
-    if dry: print(D(t("  re-run without --dry-run to actually download",
-                      "  去掉 --dry-run 重新运行即可实际下载")))
+    if dry: print(D("  re-run without --dry-run to actually download"))
 
 def _mrec(e, c, relpath, kind="file"):
     return {"caption": e["caption"].strip(), "description": (e.get("description") or "").strip(),
@@ -455,7 +428,7 @@ def _download(url, path):
             return True
         except Exception as e:
             if attempt == 3:
-                print(f"  {R(t('✗ failed', '✗ 失败'))}  {path.name}  {D(str(e)[:120])}")
+                print(f"  {R('✗ failed')}  {path.name}  {D(str(e)[:120])}")
                 if path.exists(): path.unlink()
                 return False
             time.sleep(1.5 * attempt)
@@ -467,7 +440,7 @@ def _opt(args, flag, default=None):
         return default if default is not None else True
     return default
 
-HELP_EN = """ASR · asr-export — bulk document downloader for Avenue South Residence (Habitap)
+HELP = """ASR · asr-export — bulk document downloader for Avenue South Residence (Habitap)
 The login session lives in ~/.asr and lasts about a year.
 
 Usage:
@@ -487,38 +460,10 @@ Options:
   --force         Re-download files that already exist (default: skip/resume)
   -h, --help      This help
 
-Language: English by default; set ASR_EXPORT_LANG=zh for Chinese.
-
 Files land in <dir>/<category>/<caption>.<ext>. A per-directory manifest.json
 (stored under ~/.asr/manifests/, not in the output folder) records every
 download — saved after each file, so Ctrl+C + re-run resumes. Downloads are
 paced (~0.4s apart).
-"""
-
-HELP_ZH = """ASR · asr-export — Avenue South Residence (Habitap) 文档批量下载
-登录会话存于 ~/.asr（约 1 年有效）。
-
-用法:
-  asr-export login [-u <邮箱>] [-o <otp>] [--force]
-        登录（已登录则跳过；首次/新设备需邮箱 OTP，仅一次）
-  asr-export list [--cat <关键词|id>] [--all]
-        按类别查看文档（大类别默认只预览前 10 条）
-  asr-export download [选项]
-        交互式选择类别 → 确认 → 批量下载
-
-选项:
-  -o <目录>       输出目录 (默认: 脚本旁的 asr-export/；安装后的命令默认 ~/Documents/asr-export)
-  --cat <词|id>   只处理名称含关键词或 id 匹配的类别 (如 --cat Circulars)
-  --yes, -y       跳过选择/确认直接下载 (--cat 过滤后的全部) — 脚本用
-  --dry-run       只列出将要下载的内容，不实际下载
-  --force         重新下载已存在的文件 (默认跳过/断点续传)
-  -h, --help      本帮助
-
-语言: 默认英文；设 ASR_EXPORT_LANG=zh 切换中文。
-
-文件保存在 <目录>/<类别>/<文件名>.<扩展名>。每个输出目录一份 manifest.json
-（存于 ~/.asr/manifests/，不在输出文件夹里）记录每次下载 — 每个文件下载后
-立即保存，Ctrl+C 中断后重跑可续传。下载有 ~0.4s 间隔限速。
 """
 
 def main():
@@ -526,14 +471,13 @@ def main():
     cmd = args[0] if args else "help"
     rest = args[1:]
     try:
-        if cmd in ("-h", "--help", "help"): print(HELP_ZH if LANG == "zh" else HELP_EN)
+        if cmd in ("-h", "--help", "help"): print(HELP)
         elif cmd == "login": cmd_login(rest)
         elif cmd == "list": cmd_list(rest)
         elif cmd == "download": cmd_download(rest)
-        else: die(t(f"unknown command '{cmd}' — asr-export help",
-                    f"未知命令 '{cmd}' — asr-export help"))
+        else: die(f"unknown command '{cmd}' — asr-export help")
     except KeyboardInterrupt:
-        print("\n" + D(t("interrupted — re-run to resume", "已中断 — 重新运行可续传")))
+        print("\n" + D("interrupted — re-run to resume"))
         sys.exit(130)
 
 if __name__ == "__main__":
