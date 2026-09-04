@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 asr-export — bulk document exporter for Avenue South Residence (Habitap)
 
@@ -19,16 +18,17 @@ which reverse-engineered the Habitap resident API.
 Python 3 standard library only.
 """
 
-import sys
-import os
-import json
-import time
-import ssl
-import hashlib
+import contextlib
 import datetime
 import getpass
-import urllib.request
+import hashlib
+import json
+import os
+import ssl
+import sys
+import time
 import urllib.error
+import urllib.request
 from pathlib import Path
 
 # Habitap's CA chain lacks the keyUsage extension; Python 3.13+/OpenSSL 3.5+
@@ -158,10 +158,8 @@ def api(path):
 def _save_cookies(ck):
     HOME.mkdir(parents=True, exist_ok=True)
     CKS.write_text(json.dumps(ck))
-    try:
+    with contextlib.suppress(Exception):
         os.chmod(CKS, 0o600)
-    except Exception:
-        pass
 
 
 def _merge_set_cookie(headers):
@@ -279,10 +277,11 @@ def cmd_login(args):
         )
         die(
             f"Login failed (HTTP {st}): {hint}\n"
-            "  Check: email/password are correct · the account is at Avenue South Residence · the account is active."
+            "  Check: email/password are correct · the account is at Avenue South "
+            "Residence · the account is active."
         )
 
-    st2, u = http_json("GET", api("/api/authentications/1"))
+    _, u = http_json("GET", api("/api/authentications/1"))
     unit = (u.get("unit") or {}) if isinstance(u, dict) else {}
     sess = {
         "config": dict(CFG, condoId=unit.get("condoId") or CFG["condoId"]),
@@ -303,10 +302,8 @@ def cmd_login(args):
         },
     }
     SJSON.write_text(json.dumps(sess, ensure_ascii=False, indent=2))
-    try:
+    with contextlib.suppress(Exception):
         os.chmod(SJSON, 0o600)
-    except Exception:
-        pass
     print(
         f"  {G('✓ login ok')}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
         + D(f"  ({sess['account']['condoName']})")
@@ -504,12 +501,11 @@ def cmd_download(args):
         print("  " + D("selected categories are empty, bye"))
         return
 
-    if not (auto or dry):
-        if not _confirm(
-            f"{B('confirm')} {Y(f'download {total} documents to {out} ?')} {D('[y/N]')}: "
-        ):
-            print("  " + D("cancelled"))
-            return
+    if not (auto or dry) and not _confirm(
+        f"{B('confirm')} {Y(f'download {total} documents to {out} ?')} {D('[y/N]')}: "
+    ):
+        print("  " + D("cancelled"))
+        return
     print(B("Download") + D(f"  {total} docs -> {out}" + ("  (dry-run)" if dry else "")))
 
     manifest_path = _manifest_path(out)
@@ -539,9 +535,8 @@ def cmd_download(args):
                     m["categories"].append(c["name"])
                 continue
             if dry:
-                print(
-                    f"  {Cy('would download')}  {rel}  {D(e.get('filePath') or e.get('externalUrl') or '')}"
-                )
+                url_hint = e.get("filePath") or e.get("externalUrl") or ""
+                print(f"  {Cy('would download')}  {rel}  {D(url_hint)}")
                 ok += 1
                 continue
             url = e.get("filePath")
