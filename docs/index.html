@@ -82,11 +82,11 @@
 
   .flow{display:grid;grid-template-columns:1fr;gap:16px}
   .tag{font-size:12px;color:var(--acc);font-weight:750;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;display:block}
-  .cmd{display:block;background:var(--term);color:var(--term-grn);border:1px solid var(--term-line);border-radius:10px;
-       padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:auto;margin-top:12px;white-space:nowrap}
-  .copybtn{margin-top:12px;width:100%;border:0;background:linear-gradient(135deg,var(--acc),var(--acc2) 180%);color:#fff;border-radius:10px;padding:11px 16px;font-size:14.5px;font-weight:650;cursor:pointer}
-  .copybtn:hover{filter:brightness(.9)}
-  .copybtn{transition:background .15s ease}
+  .install{display:flex;align-items:center;gap:14px;background:var(--term);border:1px solid var(--term-line);
+           border-radius:12px;padding:13px 16px;font-size:14px;box-shadow:var(--shadow);margin-top:12px}
+  .install code{color:var(--term-grn);white-space:nowrap;overflow:auto;flex:1;min-width:0}
+  .install .cp{background:#ffffff14;border:0;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;flex:none}
+  .install .cp:hover{background:#ffffff26}
 
   .step{display:grid;grid-template-columns:40px 1fr;gap:16px;margin-bottom:34px}
   .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));
@@ -190,8 +190,8 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
     <div class="flow">
       <div class="card"><span class="tag">Step 1 · Copy</span><h3>Copy the install command</h3>
         <p>Press the button. You won't see anything happen — the command is now held on your clipboard, ready to paste.</p>
-        <span class="cmd">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</span>
-        <button class="copybtn" onclick="cp('curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash',this)">Copy install command</button></div>
+        <div class="install"><code class="mono">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</code>
+          <button class="cp" onclick="cp(this.previousElementSibling.textContent,this)">copy</button></div></div>
       <div class="card"><span class="tag">Step 2 · Open</span><h3>Open the Terminal</h3>
         <p>Press <b>⌘+Space</b>, type <b>Terminal</b>, press <b>Enter</b>. A plain window opens — that's the Terminal. It's just a text box; nothing you paste here can break your computer.</p></div>
       <div class="card"><span class="tag">Step 3 · Paste</span><h3>Paste and press Enter</h3>
@@ -203,8 +203,8 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
     <div class="flow">
       <div class="card"><span class="tag">Step 1 · Copy</span><h3>Copy the download command</h3>
         <p>Press the button. You won't see anything happen — the command is now held on your clipboard, ready to paste.</p>
-        <span class="cmd">cd $env:USERPROFILE\Documents; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</span>
-        <button class="copybtn" onclick="cp('cd $env:USERPROFILE\Documents; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py',this)">Copy download command</button></div>
+        <div class="install"><code class="mono">cd $env:USERPROFILE\Documents; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</code>
+          <button class="cp" onclick="cp(this.previousElementSibling.textContent,this)">copy</button></div></div>
       <div class="card"><span class="tag">Step 2 · Open</span><h3>Open PowerShell</h3>
         <p>Press the <b>⊞ Win</b> key, type <b>PowerShell</b>, press <b>Enter</b>. A blue window opens — that's PowerShell, Windows' version of the Terminal. It's just a text box; nothing you paste here can break your computer.</p></div>
       <div class="card"><span class="tag">Step 3 · Paste</span><h3>Paste and press Enter</h3>
@@ -292,7 +292,7 @@ asr-export download --dry-run  <span class="c"># preview only, downloads nothing
 </div></footer>
 
 <script>
-function cp(txt,btn){ navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="✓ Copied!"; setTimeout(()=>btn.textContent=o,1400); }
+function cp(txt,btn){ navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="✓"; setTimeout(()=>btn.textContent=o,1200); }
 function osTab(id,btn){ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on")); btn.classList.add("on");
   ["mac","win"].forEach(x=>document.getElementById("os-"+x).classList.toggle("hide", x!==id)); }
 </script>
