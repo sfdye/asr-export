@@ -80,7 +80,7 @@
   .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut)}
   .tab.on{color:var(--fg);border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
 
-  .flow{display:grid;grid-template-columns:1fr;gap:16px}
+  .flow{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
   .tag{font-size:12px;color:var(--acc);font-weight:750;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;display:block}
   .install{display:flex;align-items:center;gap:14px;background:var(--term);border:1px solid var(--term-line);
            border-radius:12px;padding:13px 16px;font-size:14px;box-shadow:var(--shadow);margin-top:12px}
@@ -182,8 +182,8 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
   <h2>One-time setup</h2>
   <p class="lead">"Installing" just means copying a small tool from this website onto your computer, so that later you can start it by typing one word. Three steps — <b>copy, open, paste</b> — and about a minute. Pick your computer:</p>
   <div class="tabs">
-    <button class="tab on" onclick="osTab('mac',this)">I have a Mac</button>
-    <button class="tab" onclick="osTab('win',this)">I have Windows</button>
+    <button class="tab on" onclick="osTab('mac',this)">🍎 I have a Mac</button>
+    <button class="tab" onclick="osTab('win',this)">🪟 I have Windows</button>
   </div>
 
   <div id="os-mac">
@@ -287,8 +287,7 @@ asr-export download --dry-run  <span class="c"># preview only, downloads nothing
 </div></section>
 
 <footer><div class="wrap">
-  ASR Export · built for Avenue South Residence residents · <a href="https://github.com/sfdye/asr-export">source on GitHub</a><br>
-  Login flow inspired by the community project at <a href="https://asrlife.vip">asrlife.vip</a>
+  ASR Export · built for Avenue South Residence residents · <a href="https://github.com/sfdye/asr-export">source on GitHub</a>
 </div></footer>
 
 <script>
