@@ -435,11 +435,11 @@ def cmd_list(args):
     print(head)
     for c, docs in cat:
         total += len(docs)
-        print(f"\n  {B(c['name'])}  " + D(f"({len(docs)} docs, id {c['id']})"))
+        print(f"\n  {B(c['name'])}  " + D(f"({len(docs)} docs)"))
         shown = docs if show_all or len(docs) <= LIST_PREVIEW else docs[:LIST_PREVIEW]
         for e in shown:
             tag = Cy("↗") if e.get("externalUrl") and not e.get("filePath") else D("·")
-            print(f"    {tag} {e['caption'].strip()}  " + D(f"[{e['id']}]"))
+            print(f"    {tag} {e['caption'].strip()}")
         if len(shown) < len(docs):
             more = len(docs) - len(shown)
             hidden += more
