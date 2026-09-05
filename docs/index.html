@@ -41,17 +41,12 @@
         background:var(--acc-soft);border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:24px}
   .pill .d{width:6px;height:6px;border-radius:50%;background:var(--acc)}
   h1{font-size:48px;line-height:1.12;letter-spacing:-1.4px;font-weight:780;margin-bottom:20px}
-  .accent{background:linear-gradient(120deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .accent{background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
   .sub{font-size:18.5px;color:var(--mut);max-width:640px;margin:0 auto 32px;line-height:1.6}
-  .install{display:inline-flex;align-items:center;gap:14px;max-width:min(100%,560px);margin:0 auto;background:var(--term);border:1px solid var(--term-line);
-           border-radius:12px;padding:13px 16px;font-size:14px;box-shadow:var(--shadow);margin-top:32px}
-  .install code{color:var(--term-grn);white-space:nowrap;overflow:auto}
-  .install .cp{background:#ffffff14;border:0;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;flex:none}
-  .install .cp:hover{background:#ffffff26}
   .btnrow{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:12px 20px;font-size:14.5px;font-weight:650;cursor:pointer;box-shadow:var(--shadow)}
-  .btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
-  .btn.p:hover{background:#0e3757;border-color:#0e3757}
+  .btn.p{background:linear-gradient(135deg,var(--acc),var(--acc2) 180%);border-color:transparent;color:#fff}
+  .btn.p:hover{filter:brightness(.9)}
   .btn:hover{transform:translateY(-1px)}
   .btn,.card,.tab{transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease}
 
@@ -81,6 +76,18 @@
       overflow:auto;font:13.5px/1.8 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:var(--shadow)}
   pre.code .c{color:var(--term-dim)} pre.code .k{color:var(--term-grn)} pre.code .b{color:var(--term-blu)}
 
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut)}
+  .tab.on{color:var(--fg);border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .tag{font-size:12px;color:var(--acc);font-weight:750;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;display:block}
+  .cmd{display:block;background:var(--term);color:var(--term-grn);border:1px solid var(--term-line);border-radius:10px;
+       padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:auto;margin-top:12px;white-space:nowrap}
+  .copybtn{margin-top:12px;width:100%;border:0;background:linear-gradient(135deg,var(--acc),var(--acc2) 180%);color:#fff;border-radius:10px;padding:11px 16px;font-size:14.5px;font-weight:650;cursor:pointer}
+  .copybtn:hover{filter:brightness(.9)}
+  .copybtn{transition:background .15s ease}
+
   .step{display:grid;grid-template-columns:40px 1fr;gap:16px;margin-bottom:34px}
   .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));
            color:#eaf4fb;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:2px}
@@ -105,8 +112,7 @@
     header{padding:48px 0 40px}
     h1{font-size:31px;letter-spacing:-1px}
     .sub{font-size:16px;margin-bottom:26px}
-    .install{width:100%;gap:10px;padding:12px 13px}
-    .install code{font-size:11.5px}
+    .tabs{flex-wrap:wrap}
     section{padding:44px 0}
     h2{font-size:23px}
     .lead{margin-bottom:22px}
@@ -136,12 +142,9 @@
   <h1>Every document,<br><span class="accent">one command,</span><br>backed up to your computer</h1>
   <p class="sub">ASR is moving from Habitap to iCondo, and iCondo can't open your unit's documents — layouts, appliance manuals, warranties. Downloading 300+ files one by one isn't practical. <b>asr-export</b> uses your own account to fetch them all, sorted into folders. It runs entirely on your machine, and your password is never saved.</p>
   <div class="btnrow">
-    <a class="btn p" href="#guide">Show me how</a>
+    <a class="btn p" href="#install">Get started</a>
     <a class="btn" href="https://github.com/sfdye/asr-export">View source</a>
   </div>
-
-  <div class="install"><code id="installCmd" class="mono">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</code>
-    <button class="cp" onclick="cp(document.getElementById('installCmd').textContent,this)">copy</button></div>
 
   <div class="term mono" aria-hidden="true">
     <div class="term-bar"><i class="tb1"></i><i class="tb2"></i><i class="tb3"></i><span class="t">asr-export — Terminal</span></div>
@@ -177,12 +180,39 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
 <section id="install"><div class="wrap">
   <div class="eyebrow">Install</div>
   <h2>One-time setup</h2>
-  <p class="lead">You'll paste one command into your computer's <b>Terminal</b> — that's the window where you type commands. Don't worry: it's copy-paste. Mac and Linux: press the copy button, paste into the Terminal, press Enter.</p>
-  <pre class="code"><span class="c"># One-line install (macOS / Linux) — open Terminal, paste, press Enter</span>
-curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</pre>
-  <div class="note">🖥️ <b>Windows?</b> Press ⊞ Win, type <span class="mono">PowerShell</span>, press Enter, then paste:<br>
-  <span class="mono">mkdir $env:USERPROFILE\asr; cd $env:USERPROFILE\asr; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</span><br>
-  Windows skips the installer — every command then starts with <span class="mono">python asr-export.py</span> instead of <span class="mono">asr-export</span>.</div>
+  <p class="lead">"Installing" just means copying a small tool from this website onto your computer, so that later you can start it by typing one word. Three steps — <b>copy, open, paste</b> — and about a minute. Pick your computer:</p>
+  <div class="tabs">
+    <button class="tab on" onclick="osTab('mac',this)">I have a Mac</button>
+    <button class="tab" onclick="osTab('win',this)">I have Windows</button>
+  </div>
+
+  <div id="os-mac">
+    <div class="flow">
+      <div class="card"><span class="tag">Step 1 · Copy</span><h3>Copy the install command</h3>
+        <p>Press the button. You won't see anything happen — the command is now held on your clipboard, ready to paste.</p>
+        <span class="cmd">curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</span>
+        <button class="copybtn" onclick="cp('curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash',this)">Copy install command</button></div>
+      <div class="card"><span class="tag">Step 2 · Open</span><h3>Open the Terminal</h3>
+        <p>Press <b>⌘+Space</b>, type <b>Terminal</b>, press <b>Enter</b>. A plain window opens — that's the Terminal. It's just a text box; nothing you paste here can break your computer.</p></div>
+      <div class="card"><span class="tag">Step 3 · Paste</span><h3>Paste and press Enter</h3>
+        <p>Click inside the window, press <b>⌘+V</b>, then <b>Enter</b>. Some text scrolls by — when you see <b>✅ Done!</b>, it's finished. Then open a <b>new</b> Terminal window (⌘+N) for the steps below.</p></div>
+    </div>
+  </div>
+
+  <div id="os-win" class="hide">
+    <div class="flow">
+      <div class="card"><span class="tag">Step 1 · Copy</span><h3>Copy the download command</h3>
+        <p>Press the button. You won't see anything happen — the command is now held on your clipboard, ready to paste.</p>
+        <span class="cmd">cd $env:USERPROFILE\Documents; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py</span>
+        <button class="copybtn" onclick="cp('cd $env:USERPROFILE\Documents; curl.exe -fsSLO https://github.com/sfdye/asr-export/raw/main/asr-export.py',this)">Copy download command</button></div>
+      <div class="card"><span class="tag">Step 2 · Open</span><h3>Open PowerShell</h3>
+        <p>Press the <b>⊞ Win</b> key, type <b>PowerShell</b>, press <b>Enter</b>. A blue window opens — that's PowerShell, Windows' version of the Terminal. It's just a text box; nothing you paste here can break your computer.</p></div>
+      <div class="card"><span class="tag">Step 3 · Paste</span><h3>Paste and press Enter</h3>
+        <p>Click inside the window, press <b>Ctrl+V</b> (or right-click), then <b>Enter</b>. A file named <span class="mono">asr-export.py</span> now sits in your <b>Documents</b> folder. On Windows, every command in this guide starts with <span class="mono">python asr-export.py</span> — and if you open a new PowerShell window, first paste <span class="mono">cd $env:USERPROFILE\Documents</span> again.</p></div>
+    </div>
+  </div>
+
+  <div class="note">ℹ️ <b>What just happened?</b> You copied a small, safe tool from this website onto your own computer. It doesn't run by itself, changes nothing else on your machine, and only talks to Habitap — your condo's app — when you ask it to.</div>
 </div></section>
 
 <section id="guide"><div class="wrap">
@@ -197,7 +227,7 @@ curl -fsSL https://sfdye.github.io/asr-export/install.sh | bash</pre>
 
   <div class="step"><div class="n">2</div><div>
     <h3>Install the tool (once)</h3>
-    <p>Paste the install commands from the <a href="#install">Install</a> section above — only needed once. If the Terminal says <span class="mono">command not found</span> afterwards, open a new Terminal window and try again.</p>
+    <p>Follow the three steps in the <a href="#install">Install</a> section above — you only ever do this once. If the Terminal later says <span class="mono">command not found</span>, open a new Terminal window and try again.</p>
   </div></div>
 
   <div class="step"><div class="n">3</div><div>
@@ -262,7 +292,9 @@ asr-export download --dry-run  <span class="c"># preview only, downloads nothing
 </div></footer>
 
 <script>
-function cp(txt,btn){ navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="✓"; setTimeout(()=>btn.textContent=o,1200); }
+function cp(txt,btn){ navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="✓ Copied!"; setTimeout(()=>btn.textContent=o,1400); }
+function osTab(id,btn){ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on")); btn.classList.add("on");
+  ["mac","win"].forEach(x=>document.getElementById("os-"+x).classList.toggle("hide", x!==id)); }
 </script>
 </body>
 </html>
