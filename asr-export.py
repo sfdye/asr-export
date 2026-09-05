@@ -412,10 +412,23 @@ LIST_PREVIEW = 10  # per category; more than this shows a preview (--all for ful
 
 
 def _cat_match(c, flt):
-    """--cat accepts a category id (exact digits) or a name substring."""
+    """--cat/--not accept a category id (exact digits) or a name substring."""
     if str(flt).strip().isdigit():
         return str(c["id"]) == str(flt).strip()
     return str(flt).lower() in c["name"].lower()
+
+
+def _not_filters(args):
+    v = _opt(args, "--not")
+    if v is not None and not isinstance(v, str):
+        die("--not needs a value, e.g. --not Circulars")
+    return [t.strip() for t in v.split(",") if t.strip()] if isinstance(v, str) else []
+
+
+def _apply_not(catalog, kws):
+    if not kws:
+        return catalog
+    return [(c, d) for c, d in catalog if not any(_cat_match(c, k) for k in kws)]
 
 
 def cmd_list(args):
@@ -427,6 +440,7 @@ def cmd_list(args):
     cat = fetch_catalog(s)
     if flt is not None:
         cat = [(c, d) for c, d in cat if _cat_match(c, flt)]
+    cat = _apply_not(cat, _not_filters(args))
     cat = dedup_catalog(cat)
     total = hidden = 0
     head = B("ASR documents") + D(
@@ -515,6 +529,7 @@ def cmd_download(args):
     catalog = fetch_catalog(s)
     if flt is not None:
         catalog = [(c, d) for c, d in catalog if _cat_match(c, flt)]
+    catalog = _apply_not(catalog, _not_filters(args))
     catalog = dedup_catalog(catalog)
     if not catalog:
         die("No documents matched.")
@@ -670,6 +685,8 @@ Options:
   -o <dir>        Output directory (default: asr-export/ next to the script;
                   the installed command defaults to ~/Documents/asr-export)
   --cat <kw|id>   Only categories matching a name substring or id (e.g. --cat Circulars)
+  --not <kw|id>   Exclude categories matching a name substring or id (comma list ok,
+                  e.g. --not Circulars,Newsletter)
   --yes, -y       Skip selection/confirmation, download everything (--cat filtered) — for scripts
   --dry-run       Show what would be downloaded without downloading
   --force         Re-download files that already exist (default: skip/resume)
