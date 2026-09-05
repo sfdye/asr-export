@@ -63,6 +63,7 @@
   .eyebrow{font-size:12.5px;color:var(--acc);font-weight:750;letter-spacing:.6px;text-transform:uppercase;margin-bottom:11px}
   h2{font-size:28px;letter-spacing:-.5px;margin-bottom:9px}
   .lead{color:var(--mut);margin-bottom:30px;max-width:620px}
+  .lead.full{max-width:none}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
   .card:hover{transform:translateY(-3px)}
@@ -70,14 +71,13 @@
   .card h3{font-size:16.5px;margin-bottom:7px;letter-spacing:-.2px}
   .card p{color:var(--mut);font-size:14px;line-height:1.6}
 
-  .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut)}
-  .tab.on{color:var(--fg);border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
   pre.code{background:var(--term);color:var(--term-fg);border:1px solid var(--term-line);border-radius:14px;padding:20px;
       overflow:auto;font:13.5px/1.8 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:var(--shadow)}
   pre.code .c{color:var(--term-dim)} pre.code .k{color:var(--term-grn)} pre.code .b{color:var(--term-blu)}
 
   .tabs{display:flex;gap:8px;margin-bottom:18px}
-  .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut)}
+  .tab{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;cursor:pointer;font-size:14px;font-weight:650;color:var(--mut);display:inline-flex;align-items:center;gap:7px}
+  .tab svg{flex:none}
   .tab.on{color:var(--fg);border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
 
   .flow{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
@@ -180,10 +180,10 @@ confirm download 312 documents to ~/Documents/asr-export? [y/N]: y
 <section id="install"><div class="wrap">
   <div class="eyebrow">Install</div>
   <h2>One-time setup</h2>
-  <p class="lead">"Installing" just means copying a small tool from this website onto your computer, so that later you can start it by typing one word. Three steps — <b>copy, open, paste</b> — and about a minute. Pick your computer:</p>
+  <p class="lead full">"Installing" just means copying a small tool from this website onto your computer, so that later you can start it by typing one word. Three steps — <b>copy, open, paste</b> — and about a minute. Pick your computer:</p>
   <div class="tabs">
-    <button class="tab on" onclick="osTab('mac',this)">🍎 I have a Mac</button>
-    <button class="tab" onclick="osTab('win',this)">🪟 I have Windows</button>
+    <button class="tab on" onclick="osTab('mac',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.031 1.52-.06 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.377-2.376-2-.156-3.675 1.09-4.611 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.72-.688 3.559-1.701"/></svg>I have a Mac</button>
+    <button class="tab" onclick="osTab('win',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.6 4.4v7.2H3zM11.6 4.2 21 3v8.6h-9.4zM3 12.6h7.6v7.2L3 18.6zM11.6 12.6H21V21l-9.4-1.3z"/></svg>I have Windows</button>
   </div>
 
   <div id="os-mac">
