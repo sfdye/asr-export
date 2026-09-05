@@ -34,6 +34,7 @@ asr-export list                  # browse documents by category (large categorie
 asr-export list --cat Circulars --all
 asr-export download              # pick categories -> confirm -> download
 asr-export download --cat Circulars
+asr-export download --not Circulars        # everything except Circulars
 asr-export download --dry-run    # show what would be downloaded
 ```
 
