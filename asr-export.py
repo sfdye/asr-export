@@ -207,7 +207,7 @@ def cmd_login(args):
             return
     print(
         B("ASR login")
-        + D("  new devices need a one-time email OTP; session lasts ~1 year; password never stored")
+        + D("  new devices need a one-time email OTP; password never stored")
     )
     user = _opt(args, "-u")
     if not isinstance(user, str):
@@ -323,7 +323,7 @@ def cmd_login(args):
         f"  {G('✓ login ok')}  {sess['account']['fullName']}  {sess['account']['unitNo']}"
         + D(f"  ({sess['account']['condoName']})")
     )
-    print("  " + D("session saved (~1 year, password never stored to disk)"))
+    print("  " + D("session saved (password never stored to disk)"))
     print("  " + D("next:  asr-export download"))
 
 
@@ -656,7 +656,7 @@ def _opt(args, flag, default=None):
 
 
 HELP = """ASR · asr-export — bulk document downloader for Avenue South Residence (Habitap)
-The login session lives in ~/.asr and lasts about a year.
+The login session lives in ~/.asr.
 
 Usage:
   asr-export login [-u <email>] [-o <otp>] [--force | -f]
