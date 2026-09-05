@@ -8,12 +8,12 @@
 <style>
   :root{
     --bg:#f7f8fa; --panel:#ffffff; --fg:#15161a; --mut:#646878; --line:#eaecf1;
-    --acc:#10b981; --acc2:#0ea5e9; --acc-soft:#e7f9f1;
+    --acc:#005283; --acc2:#0ea5e9; --acc-soft:#e3eef6;
     --term:#0c0f17; --term-line:#1c2230; --term-fg:#d7dbe6; --term-dim:#7b8499; --term-grn:#5ee6a3; --term-blu:#6cc6ff;
     --radius:16px; --shadow:0 1px 2px rgba(20,22,30,.04), 0 12px 32px -12px rgba(20,22,30,.12);
   }
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#080a0f; --panel:#11141c; --fg:#eceef4; --mut:#9298a8; --line:#1d2230; --acc-soft:#0e2a20;
+    :root{ --bg:#080a0f; --panel:#11141c; --fg:#eceef4; --mut:#9298a8; --line:#1d2230; --acc-soft:#0d2233;
            --shadow:0 1px 2px rgba(0,0,0,.3), 0 18px 40px -16px rgba(0,0,0,.6); }
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -35,7 +35,7 @@
 
   header{padding:80px 0 64px;text-align:center;position:relative;overflow:hidden}
   header::before{content:"";position:absolute;inset:-30% 0 auto 0;height:520px;z-index:-1;
-    background:radial-gradient(620px 300px at 50% 0,rgba(16,185,129,.16),transparent 70%),
+    background:radial-gradient(620px 300px at 50% 0,rgba(0,82,131,.18),transparent 70%),
               radial-gradient(520px 260px at 78% 8%,rgba(14,165,233,.12),transparent 65%)}
   .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--acc);
         background:var(--acc-soft);border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:24px}
@@ -50,7 +50,7 @@
   .install .cp:hover{background:#ffffff26}
   .btnrow{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:12px 20px;font-size:14.5px;font-weight:650;cursor:pointer;box-shadow:var(--shadow)}
-  .btn.p{background:linear-gradient(120deg,var(--acc),#0bbf86);border-color:transparent;color:#04241a}
+  .btn.p{background:linear-gradient(120deg,var(--acc),var(--acc2));border-color:transparent;color:#eaf4fb}
   .btn:hover{transform:translateY(-1px)}
   .btn,.card,.tab{transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease}
 
@@ -82,7 +82,7 @@
 
   .step{display:grid;grid-template-columns:40px 1fr;gap:16px;margin-bottom:34px}
   .step .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));
-           color:#04241a;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+           color:#eaf4fb;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:2px}
   .step h3{font-size:17px;letter-spacing:-.2px;margin-bottom:6px}
   .step p{color:var(--mut);font-size:14.5px;max-width:640px}
   .step pre.code{margin-top:12px}
